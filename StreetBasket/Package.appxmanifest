@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" IgnorableNamespaces="uap mp">
-  <Identity Name="3883c405-22ce-4f62-9f95-b4ce622741b5" Publisher="CN=pehokkan" Version="1.0.3.0" />
+  <Identity Name="46375HokpeSoftware.StreetBasketScoreboard" Publisher="CN=08F7FB59-0196-4FF5-A166-E11574B66751" Version="1.1.6.0" />
   <mp:PhoneIdentity PhoneProductId="3883c405-22ce-4f62-9f95-b4ce622741b5" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
-    <DisplayName>StreetBasketScoreBoard</DisplayName>
-    <PublisherDisplayName>pehokkan</PublisherDisplayName>
+    <DisplayName>Street Basket Scoreboard</DisplayName>
+    <PublisherDisplayName>Hokpe Software</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   <Dependencies>
@@ -16,7 +16,7 @@
   <Applications>
     <Application Id="App" Executable="$targetnametoken$.exe" EntryPoint="StreetBasket.App">
       <uap:VisualElements DisplayName="Street Basket Scoreboard" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" Description="Street Basket ScoreBoard is the application that makes it easy to measure the time of the period, calculate the scores and measure timeouts. You can customize the icon, rules, length of the period and timeouts. Other &quot;hidden&quot; features are: raffle the starter, select the  team colors and show the rules." BackgroundColor="transparent">
-        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" ShortName="StreetBasket" Square71x71Logo="Assets\Square71x71Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" ShortName="Street Basket">
           <uap:ShowNameOnTiles>
             <uap:ShowOn Tile="square150x150Logo" />
           </uap:ShowNameOnTiles>

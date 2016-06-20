@@ -87,7 +87,7 @@ namespace StreetBasket
             MainPage rootPage = e.Parameter as MainPage;
             ResetValues();
             ReadRulesFromFile();
-            setLogo();
+            //setLogo();
             g_DisplayRequest = new DisplayRequest();
         }
         private async void setLogo()

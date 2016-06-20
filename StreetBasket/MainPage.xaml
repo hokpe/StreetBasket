@@ -10,43 +10,78 @@
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="33*"/>
-            <RowDefinition Height="33*"/>
-            <RowDefinition Height="33*"/>
+            <RowDefinition Height="100*"/>
+            <RowDefinition Height="30"/>
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="25*"/>
-            <ColumnDefinition Width="33*"/>
-            <ColumnDefinition Width="25*"/>
-        </Grid.ColumnDefinitions>
-        <GridView x:Name="gridView" Margin="0,0,10,10"/>
-        <Rectangle Fill="#FF8F8FF0" Stroke="Black" Margin="10" Grid.Column="2" Tapped="AwayTimeoutTapped"/>
-        <Rectangle Fill="#FF8F8FF0" Stroke="Black" Margin="10" Grid.Row="1" Tapped="HomeScoreTapped"/>
-        <Rectangle Fill="#FF8F8FF0" Stroke="Black" Margin="10" Tapped="HomeTimeoutTapped"/>
-        <Rectangle Fill="#FF8F8FF0" Stroke="Black" Margin="10" Grid.Column="2" Grid.Row="1" Tapped="AwayScoreTapped"/>
-        <Rectangle Fill="#FF8F8FF0" Stroke="Black" Margin="20,10" Grid.Column="1" Grid.Row="1" d:LayoutOverrides="LeftPosition, RightPosition"/>
-        <Image x:Name="Assets_StreetBasket_jpg" VerticalAlignment="Center"  HorizontalAlignment="Center" Source="Assets/StreetBasket.jpg" Stretch="Fill" Grid.Column="1" Tapped="RulesTapped"/>
-        <Button x:Name="button_HomePlus" Margin="10,10,0,42" Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Top" Width="85" Height="85" Click="HomePlusClick">
-            <Image x:Name="Assets_plus_png" Source="Assets/plus.png" Stretch="Fill" Grid.Row="2" d:LayoutOverrides="TopPosition, BottomPosition"/>
-        </Button>
-        <Button x:Name="button_HomeMinus" Margin="0,10,10,42" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Top" Width="85" Height="85" RenderTransformOrigin="-0.089,0.578" Click="HomeMinusClick">
-            <Image x:Name="Assets_minus_png_Copy" HorizontalAlignment="Right" Grid.Row="2" Source="Assets/minus.png" Stretch="Fill" Grid.Column="2"/>
-        </Button>
-        <Button x:Name="button_AwayPlus" Margin="0,10,10,42" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Top" Width="85" Height="85" Grid.Column="2" Click="AwayMinusClick">
-            <Image x:Name="Assets_minus_png" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Row="2" Source="Assets/minus.png" Stretch="Fill" />
-        </Button>
-        <Button x:Name="button_AwayMinus" Margin="9.667,10,0,42" Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Top" Width="85" Height="85" Grid.Column="2" Click="AwayPlusClick" DoubleTapped="StartStopHolding">
-            <Image x:Name="Assets_plus_png_Copy" HorizontalAlignment="Left" Source="Assets/plus.png" Stretch="Fill" Grid.Row="2" d:LayoutOverrides="TopPosition, BottomPosition" Grid.Column="2"/>
-        </Button>
-        <Button x:Name="button_StartStop"  Grid.Column="1" HorizontalAlignment="Stretch" Margin="20,10,20.333,42" Grid.Row="2" Height="85" VerticalAlignment="Top" FontFamily="Haettenschweiler" FontSize="48" Holding="StartStopHolding" Tapped="StartStopClick">
-            <TextBlock x:Name="TextBlock_StartStop" Text="Start" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-        </Button>
-        <TextBlock x:Name="textBlock_HomeScore" VerticalAlignment="Center"  HorizontalAlignment="Center" Grid.Row="1" TextWrapping="Wrap" Text="0" Foreground="#FFFFFDFD" FontFamily="Haettenschweiler" FontSize="90" Tapped="HomeScoreTapped"/>
-        <TextBlock x:Name="textBlock_AwayScore" VerticalAlignment="Center"  HorizontalAlignment="Center" Grid.Row="1" TextWrapping="Wrap" Text="0" Foreground="#FF060404" FontFamily="Haettenschweiler" FontSize="90" Grid.Column="2" Tapped="AwayScoreTapped" />
-        <TextBlock x:Name="textBlock_Time" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5,5,5,5" Grid.Row="1" TextWrapping="Wrap" Text="15:00" Foreground="#FFFBFB08" FontFamily="Haettenschweiler" FontSize="85" Grid.Column="1" d:LayoutOverrides="Width, LeftPosition, RightPosition" Tapped="TimeTapped"/>
-        <TextBlock x:Name="textBlock_AwayTimeoutTime" VerticalAlignment="Center" Margin="5,5,5,5" HorizontalAlignment="Center" TextWrapping="Wrap" Text="0" Foreground="#FFFBFB08" FontFamily="Haettenschweiler" FontSize="85" Grid.Column="2" d:LayoutOverrides="Width, LeftPosition, RightPosition" Tapped="AwayTimeoutTapped"/>
-        <TextBlock x:Name="textBlock_HomeTimeoutTime" VerticalAlignment="Center" Margin="5,5,5,5" HorizontalAlignment="Center" TextWrapping="Wrap" Text="0" Foreground="#FFFBFB08" FontFamily="Haettenschweiler" FontSize="85" d:LayoutOverrides="Width, LeftPosition, RightPosition" Tapped="HomeTimeoutTapped"/>
-        <Image x:Name="BlackArrow" VerticalAlignment="Top" HorizontalAlignment="Right" Source="Assets/Black_Arrow.png" Stretch="Fill"  Grid.Column="1" Height="50" Width="100" Grid.Row="1"/>
-        <Image x:Name="WhiteArrow" VerticalAlignment="Top" HorizontalAlignment="Left" Source="Assets/White_Arrow.png" Stretch="Fill"  Grid.Column="1" Height="50" Width="100" Grid.Row="1"/>
+        <Grid Grid.Row="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="33*"/>
+                <RowDefinition Height="33*"/>
+                <RowDefinition Height="33*"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="25*"/>
+                <ColumnDefinition Width="33*"/>
+                <ColumnDefinition Width="25*"/>
+            </Grid.ColumnDefinitions>
+            <GridView x:Name="gridView" Margin="0,0,10,10"/>
+            <Rectangle Fill="#FF8F8FF0" Stroke="Black" Margin="10" Grid.Column="2" Tapped="AwayTimeoutTapped"/>
+            <Rectangle Fill="#FF8F8FF0" Stroke="Black" Margin="10" Grid.Row="1" Tapped="HomeScoreTapped"/>
+            <Rectangle Fill="#FF8F8FF0" Stroke="Black" Margin="10" Tapped="HomeTimeoutTapped"/>
+            <Rectangle Fill="#FF8F8FF0" Stroke="Black" Margin="10" Grid.Column="2" Grid.Row="1" Tapped="AwayScoreTapped"/>
+            <Rectangle Fill="#FF8F8FF0" Stroke="Black" Margin="20,10" Grid.Column="1" Grid.Row="1" d:LayoutOverrides="LeftPosition, RightPosition"/>
+            <Image x:Name="Assets_StreetBasket_jpg" VerticalAlignment="Center"  HorizontalAlignment="Center" Source="Assets/StreetBasket.jpg" Stretch="Fill" Grid.Column="1" Tapped="RulesTapped"/>
+            <Button x:Name="button_HomePlus" Margin="10,10,10,10" Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Top" Width="85" Height="85" Click="HomePlusClick">
+                <Image x:Name="Assets_plus_png" Source="Assets/plus.png" Stretch="Fill" Grid.Row="2" d:LayoutOverrides="TopPosition, BottomPosition"/>
+            </Button>
+            <Button x:Name="button_HomeMinus" Margin="10,10,10,10" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Top" Width="85" Height="85" RenderTransformOrigin="-0.089,0.578" Click="HomeMinusClick">
+                <Image x:Name="Assets_minus_png_Copy" HorizontalAlignment="Right" Grid.Row="2" Source="Assets/minus.png" Stretch="Fill" Grid.Column="2"/>
+            </Button>
+            <Button x:Name="button_AwayPlus" Margin="10,10,10,10" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Top" Width="85" Height="85" Grid.Column="2" Click="AwayMinusClick">
+                <Image x:Name="Assets_minus_png" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Row="2" Source="Assets/minus.png" Stretch="Fill" />
+            </Button>
+            <Button x:Name="button_AwayMinus" Margin="10,10,10,10" Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Top" Width="85" Height="85" Grid.Column="2" Click="AwayPlusClick" DoubleTapped="StartStopHolding">
+                <Image x:Name="Assets_plus_png_Copy" HorizontalAlignment="Left" Source="Assets/plus.png" Stretch="Fill" Grid.Row="2" d:LayoutOverrides="TopPosition, BottomPosition" Grid.Column="2"/>
+            </Button>
+            <Button x:Name="button_StartStop"  Grid.Column="1" HorizontalAlignment="Stretch" Margin="20,10,20,10" Grid.Row="2" Height="85" VerticalAlignment="Top" FontFamily="Haettenschweiler" FontSize="48" Holding="StartStopHolding" Tapped="StartStopClick" RightTapped="StartStopRightTapped">
+                <TextBlock x:Name="TextBlock_StartStop" Text="Start" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Button>
+            <TextBlock x:Name="textBlock_HomeScore" VerticalAlignment="Center"  HorizontalAlignment="Center" Grid.Row="1" TextWrapping="Wrap" Text="0" Foreground="#FFFFFDFD" FontFamily="Haettenschweiler" FontSize="90" Tapped="HomeScoreTapped"/>
+            <TextBlock x:Name="textBlock_AwayScore" VerticalAlignment="Center"  HorizontalAlignment="Center" Grid.Row="1" TextWrapping="Wrap" Text="0" Foreground="#FF060404" FontFamily="Haettenschweiler" FontSize="90" Grid.Column="2" Tapped="AwayScoreTapped" />
+            <TextBlock x:Name="textBlock_Time" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="5,5,5,5" Grid.Row="1" TextWrapping="Wrap" Text="15:00" Foreground="#FFFBFB08" FontFamily="Haettenschweiler" FontSize="85" Grid.Column="1" d:LayoutOverrides="Width, LeftPosition, RightPosition" Tapped="TimeTapped"/>
+            <TextBlock x:Name="textBlock_AwayTimeoutTime" VerticalAlignment="Center" Margin="5,5,5,5" HorizontalAlignment="Center" TextWrapping="Wrap" Text="0" Foreground="#FFFBFB08" FontFamily="Haettenschweiler" FontSize="85" Grid.Column="2" d:LayoutOverrides="Width, LeftPosition, RightPosition" Tapped="AwayTimeoutTapped"/>
+            <TextBlock x:Name="textBlock_HomeTimeoutTime" VerticalAlignment="Center" Margin="5,5,5,5" HorizontalAlignment="Center" TextWrapping="Wrap" Text="0" Foreground="#FFFBFB08" FontFamily="Haettenschweiler" FontSize="85" d:LayoutOverrides="Width, LeftPosition, RightPosition" Tapped="HomeTimeoutTapped"/>
+            <Image x:Name="BlackArrow" VerticalAlignment="Top" HorizontalAlignment="Right" Source="Assets/Black_Arrow.png" Stretch="Fill"  Grid.Column="1" Height="50" Width="100" Grid.Row="1"/>
+            <Image x:Name="WhiteArrow" VerticalAlignment="Top" HorizontalAlignment="Left" Source="Assets/White_Arrow.png" Stretch="Fill"  Grid.Column="1" Height="50" Width="100" Grid.Row="1"/>
+            <Rectangle x:Name="PopUpQueryBorder" Grid.Column="1" Grid.Row="1" Margin="-150,-10,-150,-90" Stroke="Black" StrokeThickness="3" Fill="White"/>
+            <TextBlock x:Name="PopUpQueryInfo" Text="Enter Rules" Grid.Column="1" Grid.Row="1" Margin="-140,0,-140, 0" FontSize="20"/>
+            <TextBox x:Name="PopUpQueryBox" Grid.Column="1" Grid.Row="1" Margin="-140,30,-140, -80" Background="#FFF1D5D5" AcceptsReturn="True" />
+            <StackPanel Grid.Column="1" Grid.Row="1" Margin="-150, -5,-140, 0" HorizontalAlignment="Right" VerticalAlignment="Top" Orientation="Horizontal" >
+                <Button x:Name="PopUpQueryClearButton"  Content="Clear" BorderBrush="Black" Background="#FFF1A940" Click="PopUpQueryCancelClick" />
+                <Button x:Name="PopUpQueryOkButton" Content="OK" BorderBrush="Black" Background="#FF27CD02" Click="PopUpQueryOkClick" Margin="10, 0, 0, 0"/>
+            </StackPanel>
+        </Grid>
+
+        <CommandBar HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Grid.Column="2" Grid.Row="3" Height="40" Background="#FF8F8FF0">
+            <!--AppBarToggleButton Icon="Shuffle" Label="Shuffle" Click="AppBarButton_Click" />
+        <AppBarToggleButton Icon="RepeatAll" Label="Repeat" Click="AppBarButton_Click"/>
+        <AppBarSeparator/>
+        <AppBarButton Icon="Back" Label="Back" Click="AppBarButton_Click"/>
+        <AppBarButton Icon="Stop" Label="Stop" Click="AppBarButton_Click"/>
+        <AppBarButton Icon="Play" Label="Play" Click="AppBarButton_Click"/>
+        <AppBarButton Icon="Forward" Label="Forward" Click="AppBarButton_Click"/-->
+
+            <CommandBar.SecondaryCommands>
+                <AppBarButton Label="Select logo" Click="SelectIcon_Click"/>
+                <AppBarButton Label="Edit rules" Click="EditRules_Click"/>
+                <AppBarButton x:Name="ConfigModeAppBarButton" Label="Config mode" Click="ConfigMode_Click"/>
+                <AppBarButton Label="About" Click="About_Click"/>
+            </CommandBar.SecondaryCommands>
+
+            <!--CommandBar.Content>
+            <TextBlock Text="Now playing..." Margin="12,14"/>
+        </-->
+        </CommandBar>
     </Grid>
 </Page>
+    

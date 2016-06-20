@@ -2,14 +2,18 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
+using Windows.ApplicationModel;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Media;
 using Windows.Media.Audio;
 using Windows.Security.Cryptography;
+using Windows.Storage;
+using Windows.Storage.Pickers;
 using Windows.UI;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
@@ -18,7 +22,11 @@ using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
+using Windows.UI.Notifications;
+using Windows.System.Display;
+
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -30,23 +38,31 @@ namespace StreetBasket
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        static int MAIN_TIMER = 60 * 15; // 15 min
-        static int TiMEOUT_TIMER = 30;   // 30 sec
+        static int RoundLenght = 15; // 15 min
+        static int TimeoutLenght = 30; // 30 sec
+        static int MAIN_TIMER = 60 * RoundLenght; // 15 min
+        static int TIMEOUT_TIMER = TimeoutLenght;  // 30 sec
+        private int[] DifferentTimeouts = { 20, 30, 60 };
         private enum TIMEOUT_TYPE { none, home, away };
         private Color[] colors; // declare numbers as an int array of any size
-        
+
         private DispatcherTimer mainTimer;
         private DispatcherTimer timeoutTimer;
         private DispatcherTimer RandomAnimationTimer;
+
         int timesTicked = 1;
         int timesToTick = MAIN_TIMER;
         int timeoutTicked = 1;
-        int timeoutToTick = TiMEOUT_TIMER;
+        int timeoutToTick = TIMEOUT_TIMER;
         int randomCounter = 50;
         int HomeColor = 0;
         int AwayColor = 1;
         Boolean running = false;
         private Audio audio = new Audio();
+        string rules = null;
+        private bool PageEnabled;
+        private bool ConfigMode;
+        DisplayRequest g_DisplayRequest;
 
         private TIMEOUT_TYPE timeout { get; set; }
 
@@ -68,7 +84,35 @@ namespace StreetBasket
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
+            MainPage rootPage = e.Parameter as MainPage;
             ResetValues();
+            ReadRulesFromFile();
+            setLogo();
+            g_DisplayRequest = new DisplayRequest();
+        }
+        private async void setLogo()
+        {
+            bool CustomLogoUsed = false;
+            try
+            {
+                string s = "logo.jpg";
+                StorageFolder folder = ApplicationData.Current.LocalFolder;
+                StorageFile file = await folder.GetFileAsync(s);
+                if (file != null)
+                {
+                    var stream = await file.OpenAsync(Windows.Storage.FileAccessMode.Read);
+                    var image = new BitmapImage();
+                    image.SetSource(stream);
+                    Assets_StreetBasket_jpg.Source = image;
+                    CustomLogoUsed = true;
+                }
+            }
+            catch (Exception ex) when (ex is System.IO.FileNotFoundException || ex is System.InvalidOperationException) { }
+
+            if (!CustomLogoUsed)
+            {
+                Assets_StreetBasket_jpg.Source = new BitmapImage(new Uri("ms-appx:///Assets/StreetBasket.jpg"));
+            }
         }
 
         async void mainTimer_Tick(object sender, object e)
@@ -82,6 +126,15 @@ namespace StreetBasket
                 audio.PlayAudio();
                 await Task.Delay(TimeSpan.FromSeconds(2));
                 audio.StopAudio();
+                TextBlock_StartStop.Text = "Reset";
+                try
+                {
+                    g_DisplayRequest.RequestRelease();
+                }
+                catch (Exception ex)
+                {
+                    Task task = new MessageDialog("DisplayRequest.RequestRelease failed " + ex.Message).ShowAsync().AsTask();
+                }
             }
             timesTicked++;
         }
@@ -129,7 +182,7 @@ namespace StreetBasket
                     BlackArrow.Visibility = Visibility.Visible;
                     WhiteArrow.Visibility = Visibility.Collapsed;
                 }
-                if(randomCounter == 0)
+                if (randomCounter == 0)
                 {
                     RandomAnimationTimer.Stop();
                 }
@@ -141,7 +194,7 @@ namespace StreetBasket
             timesTicked = 1;
             timesToTick = MAIN_TIMER; // 900 = 15 min
             timeoutTicked = 1;
-            timeoutToTick = TiMEOUT_TIMER; // 30 = 30 sec
+            timeoutToTick = TIMEOUT_TIMER; // 30 = 30 sec
             textBlock_Time.Text = getTimeString(timesToTick);
             textBlock_AwayScore.Text = "0";
             textBlock_HomeScore.Text = "0";
@@ -149,6 +202,9 @@ namespace StreetBasket
             textBlock_HomeTimeoutTime.Text = getTimeString(timeoutToTick);
             BlackArrow.Visibility = Visibility.Collapsed;
             WhiteArrow.Visibility = Visibility.Collapsed;
+            HideEditor();
+            TextBlock_StartStop.Text = "Start";
+            running = false;
         }
 
         private string getTimeString(int Time)
@@ -204,9 +260,36 @@ namespace StreetBasket
             }
         }
 
+        private void ChangeTimeoutLength()
+        {
+            for (int i = 0; i < DifferentTimeouts.Length; i++)
+            {
+                if (TimeoutLenght == DifferentTimeouts[i])
+                {
+                    if (i == DifferentTimeouts.Length - 1)
+                    {
+                        TimeoutLenght = DifferentTimeouts[0];
+                    }
+                    else
+                    {
+                        TimeoutLenght = DifferentTimeouts[i + 1];
+                    }
+                    break;
+                }
+            }
+            TIMEOUT_TIMER = TimeoutLenght;
+            timeoutToTick = TIMEOUT_TIMER;
+            textBlock_AwayTimeoutTime.Text = getTimeString(timeoutToTick);
+            textBlock_HomeTimeoutTime.Text = getTimeString(timeoutToTick);
+        }
+    
         private void AwayTimeoutTapped(object sender, TappedRoutedEventArgs e)
         {
-            if (!running && timeout != TIMEOUT_TYPE.home)
+            if (ConfigMode)
+            {
+                ChangeTimeoutLength();
+            }
+            else if (!running && timeout != TIMEOUT_TYPE.home && PageEnabled)
             {
                 if (timeout == TIMEOUT_TYPE.none && textBlock_AwayTimeoutTime.Text != "0:00")
                 {
@@ -228,7 +311,11 @@ namespace StreetBasket
 
         private void HomeTimeoutTapped(object sender, TappedRoutedEventArgs e)
         {
-            if (!running && timeout != TIMEOUT_TYPE.away)
+            if (ConfigMode)
+            {
+                ChangeTimeoutLength();
+            }
+            else if (!running && timeout != TIMEOUT_TYPE.away && PageEnabled)
             {
                 if (timeout == TIMEOUT_TYPE.none && textBlock_HomeTimeoutTime.Text != "0:00")
                 {
@@ -250,63 +337,108 @@ namespace StreetBasket
 
         private void StartStopHolding(object sender, HoldingRoutedEventArgs e)
         {
-            if (!running && timeout == TIMEOUT_TYPE.none)
+            if (PageEnabled)
             {
-                ResetValues();
+                if (!running && timeout == TIMEOUT_TYPE.none)
+                {
+                    ResetValues();
+                }
             }
         }
 
         private void StartStopHolding(object sender, DoubleTappedRoutedEventArgs e)
         {
-            if (!running && timeout == TIMEOUT_TYPE.none)
+            if (PageEnabled)
             {
-                ResetValues();
+                if (!running && timeout == TIMEOUT_TYPE.none)
+                {
+                    ResetValues();
+                }
             }
         }
 
         private void StartStopClick(object sender, TappedRoutedEventArgs e)
         {
-            BlackArrow.Visibility = Visibility.Collapsed;
-            WhiteArrow.Visibility = Visibility.Collapsed;
-            if (timeout == TIMEOUT_TYPE.none)
+            if (PageEnabled)
             {
-                running = !running;
-                if (running)
+                BlackArrow.Visibility = Visibility.Collapsed;
+                WhiteArrow.Visibility = Visibility.Collapsed;
+                if (timeout == TIMEOUT_TYPE.none)
                 {
-                    TextBlock_StartStop.Text = "Stop";
-                    mainTimer.Start();
-                }
-                else
-                {
-                    TextBlock_StartStop.Text = "Start";
-                    mainTimer.Stop();
+                    if (TextBlock_StartStop.Text == "Reset")
+                    {
+                        ResetValues();
+                    }
+                    else
+                    {
+                        running = !running;
+                        if (running)
+                        {
+                            TextBlock_StartStop.Text = "Stop";
+                            mainTimer.Start();
+                            try
+                            {
+                                g_DisplayRequest.RequestActive();
+                            }
+                            catch (Exception ex)
+                            {
+                                Task task = new MessageDialog("DisplayRequest.RequestActive failed " + ex.Message).ShowAsync().AsTask();
+                            }
+                        }
+                        else
+                        {
+                            TextBlock_StartStop.Text = "Start";
+                            mainTimer.Stop();
+                            try
+                            {
+                                g_DisplayRequest.RequestRelease();
+                            }
+                            catch (Exception ex)
+                            {
+                                Task task = new MessageDialog("DisplayRequest.RequestRelease failed " + ex.Message).ShowAsync().AsTask();
+                            }
+                        }
+                    }
                 }
             }
         }
 
         private void RulesTapped(object sender, TappedRoutedEventArgs e)
         {
-            /* Asynkroninen operaatio ilman varoituksia. */
-            Task task = new MessageDialog("Salo StreetBasket Säännöt:\n\n1. Peli\nPeliä pelaa yhteen koriin kaksi joukkuetta, joilla kummallakin on kolme pelaajaa kerrallaan kentällä.Pelissä noudatetaan virallisia koripallosääntöjä näissä säännöissä mainituin poikkeuksin.\n\n2.Pelikenttä\nPelikentän koko on noin puolet normaalista koripallokentästä.Pääty - ja sivurajat merkitään olosuhteisiin parhaiten soveltuvalla tavalla.Kenttään tulee merkitä myös aloituspiste / -viiva ja vapaaheittoviiva sekä kolmen pisteen heittoviiva.\n\n3.Toimitsijat\nPelissä ei ole erotuomaria, vaan ns.valvoja laskee pisteet.Pelaajat tuomitsevat itse ottelunsa, jolloin hyökkääjä tuomitsee puolustajan virheet ja rikkomukset ja puolustaja vastaavasti hyökkääjän.Pelaajien omista tuomioista ei seuraa vapaaheittoja vaan peliä jatketaan aloituspisteestä kohdan 7.Rikkomukset ja virheet kohdan mukaisesti.\n\n4.Pelaajat\nJoukkueessa saa olla enintään viisi pelaajaa, joista kentällä yhtä aikaa kolme.Firma - sarjassa ja Hupi - sarjassa ei rajoitteita pelaajamäärä / joukkue.\n\n5. Pelin pituus\nOttelun max.kestoaika on 15min. Ottelun voittaa ja päättää ensimmäisenä 15 pistettä tehnyt joukkue.Mikäli eroa on vain yksi piste, jatketaan kunnes syntyy kahden pisteen ero, tai kunnes toinen joukkue saavuttaa 20 pistettä.Joukkueilla on oikeus 30 sekunnin aikalisään.Mikäli peli on tasan kun 15min täyttyy, pelataan jatkoaika ns.kultainen kori - säännöllä.Tällöin aloittaja arvotaan.\n\n6.Pelimääräykset\nAloittava joukkue arvotaan.Peli alkaa aloittavan joukkueen syötöllä aloituspisteestä(vapaaheittoympyrän kaaren takaa, n. 6, 5 m korirenkaasta).Hyökkäysaika on rajoittamaton.Hyökkäysvuoro vaihtuu jokaisen hyväksytyn pelikorin jälkeen.Peli jatkuu, kun puolustukseen ryhmittynyt joukkue antaa pallon aloituspisteessä olevalle hyökkäävän joukkueen pelaajalle.Kiistapallotilanteissa aloitus annetaan aina puolustavalle joukkueelle.Korista saa yhden pisteen, kolmen pisteen viivan takaa tehdystä korista saa kaksi pistettä.Pelaajavaihtoja voidaan suorittaa vapaasti kaikkien pelikatkojen aikana.\n\n7.Rikkomukset ja virheet\nKolmen sekunnin sääntö ei ole voimassa.Virheistä(pelaajien henkilökohtaiset virheet), rikkomuksista(esim.askelrike, kaksoiskuljetus) ja pallon joutuessa ulos kentältä rikkeen aiheuttaneen joukkueen vastustaja saa aloituksen aloituspisteestä.Ottelun valvoja voi omasta aloitteestaan puuttua tarvittaessa peliin.Hän voi tuomita epäurheilijamaisen tai teknillisen virheen, josta seuraa rikotulle joukkueelle yksi vapaaheitto ja sen jälkeen myös aloitus samalle joukkueelle aloituspisteestä.").ShowAsync().AsTask();
+            if (rules != null && PageEnabled)
+            {
+                /* Asynkroninen operaatio ilman varoituksia. */
+                Task task = new MessageDialog(rules).ShowAsync().AsTask();
+            }
         }
 
         private void TimeTapped(object sender, TappedRoutedEventArgs e)
         {
-            if (BlackArrow.Visibility == Visibility.Visible || WhiteArrow.Visibility == Visibility.Visible)
+            if (ConfigMode)
             {
-                BlackArrow.Visibility = Visibility.Collapsed;
-                WhiteArrow.Visibility = Visibility.Collapsed;
+                RoundLenght++; if (RoundLenght >= 21) RoundLenght = 5; 
+                MAIN_TIMER = 60 * RoundLenght;
+                timesToTick = MAIN_TIMER;
+                textBlock_Time.Text = getTimeString(timesToTick);
             }
-            else if (timeout == TIMEOUT_TYPE.none && running == false)
+            else if (PageEnabled)
             {
-                randomCounter = 50;
-                RandomAnimationTimer.Start();
+                if (BlackArrow.Visibility == Visibility.Visible || WhiteArrow.Visibility == Visibility.Visible)
+                {
+                    BlackArrow.Visibility = Visibility.Collapsed;
+                    WhiteArrow.Visibility = Visibility.Collapsed;
+                }
+                else if (timeout == TIMEOUT_TYPE.none && running == false)
+                {
+                    randomCounter = 50;
+                    RandomAnimationTimer.Start();
+                }
             }
         }
 
         private void HomeScoreTapped(object sender, TappedRoutedEventArgs e)
         {
-            if (timeout == TIMEOUT_TYPE.none && running == false)
+            if (timeout == TIMEOUT_TYPE.none && running == false && PageEnabled)
             {
                 HomeColor++; if (HomeColor >= colors.Length) HomeColor = 0;
                 textBlock_HomeScore.Foreground = new SolidColorBrush(colors[HomeColor]);
@@ -315,10 +447,216 @@ namespace StreetBasket
 
         private void AwayScoreTapped(object sender, TappedRoutedEventArgs e)
         {
-            if (timeout == TIMEOUT_TYPE.none && running == false)
+            if (ConfigMode)
+            {
+                for(int i = 0; i < DifferentTimeouts.Length; i++)
+                {
+                    if(TimeoutLenght == DifferentTimeouts[i])
+                    {
+                        if(i == DifferentTimeouts.Length - 1)
+                        {
+                            TimeoutLenght = DifferentTimeouts[0];
+                        }
+                        else
+                        {
+                            TimeoutLenght = DifferentTimeouts[i+1];
+                        }
+                    }
+                }
+                TIMEOUT_TIMER = TimeoutLenght;
+                timeoutToTick = TIMEOUT_TIMER;
+                textBlock_AwayTimeoutTime.Text = getTimeString(timeoutToTick);
+                textBlock_HomeTimeoutTime.Text = getTimeString(timeoutToTick);
+            }
+            else if (timeout == TIMEOUT_TYPE.none && running == false && PageEnabled)
             {
                 AwayColor++; if (AwayColor >= colors.Length) AwayColor = 0;
                 textBlock_AwayScore.Foreground = new SolidColorBrush(colors[AwayColor]);
+            }
+        }
+
+        private void EditRules_Click(object sender, RoutedEventArgs e)
+        {
+            if (!running && timeoutTicked == 1 && timesTicked == 1)
+            {
+                PopUpQueryBorder.Visibility = Visibility.Visible;
+                PopUpQueryBox.Visibility = Visibility.Visible;
+                PopUpQueryInfo.Visibility = Visibility.Visible;
+                PopUpQueryOkButton.Visibility = Visibility.Visible;
+                PopUpQueryClearButton.Visibility = Visibility.Visible;
+                if (rules != null)
+                {
+                    PopUpQueryBox.Text = rules;
+                }
+                EnableApp(false);
+            }
+            else
+            {
+                string s = "Reset to the initial state first.";
+                Task task = new MessageDialog(s).ShowAsync().AsTask();
+            }
+        }
+
+        private async void SelectIcon_Click(object sender, RoutedEventArgs e)
+        {
+            if (!running && timeoutTicked == 1 && timesTicked == 1)
+            {
+                FileOpenPicker openPicker = new FileOpenPicker();
+                openPicker.ViewMode = PickerViewMode.Thumbnail;
+                openPicker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
+                openPicker.FileTypeFilter.Add(".jpg");
+                openPicker.FileTypeFilter.Add(".png");
+                StorageFile file = await openPicker.PickSingleFileAsync();
+                if (file != null)
+                {
+                    string renamedFileName = "logo.jpg";
+                    StorageFolder folder = ApplicationData.Current.LocalFolder;
+                    StorageFile copiedFile = await file.CopyAsync(folder, renamedFileName, NameCollisionOption.ReplaceExisting);
+                    var stream = await copiedFile.OpenAsync(Windows.Storage.FileAccessMode.Read);
+                    var image = new BitmapImage();
+                    image.SetSource(stream);
+                    Assets_StreetBasket_jpg.Source = image;
+                }
+                else
+                {
+                    Assets_StreetBasket_jpg.Source = new BitmapImage(new Uri("ms-appx:///Assets/StreetBasket.jpg"));
+                    string s = "logo.jpg";
+                    StorageFolder folder = ApplicationData.Current.LocalFolder;
+                    StorageFile file2 = await folder.GetFileAsync(s);
+                    if (file2 != null)
+                    {
+                        await file2.DeleteAsync();
+                    }
+                }
+            }
+            else
+            {
+                string s = "Reset to the initial state first.";
+                Task task = new MessageDialog(s).ShowAsync().AsTask();
+            }
+        }
+
+        private async void StoreRulesToFile(string r)
+        {
+            StorageFolder folder = ApplicationData.Current.LocalFolder;
+            StorageFile File = await folder.CreateFileAsync("rules.txt", CreationCollisionOption.ReplaceExisting);
+            await FileIO.WriteTextAsync(File, r);
+        }
+
+        private async void ReadRulesFromFile()
+        {
+            StorageFolder folder = ApplicationData.Current.LocalFolder;
+            try
+            {
+                StorageFile File = await folder.GetFileAsync("rules.txt");
+                rules = await FileIO.ReadTextAsync(File);
+            }
+            catch (Exception ex) when (ex is System.IO.FileNotFoundException || ex is System.InvalidOperationException)
+            {
+                rules = null;
+            }
+        }
+
+        private void HideEditor()
+        {
+            PopUpQueryBorder.Visibility = Visibility.Collapsed;
+            PopUpQueryBox.Visibility = Visibility.Collapsed;
+            PopUpQueryInfo.Visibility = Visibility.Collapsed;
+            PopUpQueryOkButton.Visibility = Visibility.Collapsed;
+            PopUpQueryClearButton.Visibility = Visibility.Collapsed;
+            EnableApp(true);
+        }
+
+        private void EnableApp(bool enable)
+        {
+            button_AwayMinus.IsEnabled = enable;
+            button_AwayPlus.IsEnabled = enable;
+            button_HomeMinus.IsEnabled = enable;
+            button_HomePlus.IsEnabled = enable;
+            button_StartStop.IsEnabled = enable;
+            PageEnabled = enable;
+        }
+
+        private void PopUpQueryOkClick(object sender, RoutedEventArgs e)
+        {
+            string s = PopUpQueryBox.Text;
+            string ss = null;
+
+            do
+            {
+                ss = replaseLineFeed(s);
+                if (ss != null) s = ss;
+            } while (ss != null);
+
+            rules = s;
+            StoreRulesToFile(rules);
+            HideEditor();
+        }
+
+        private string replaseLineFeed(string s_in)
+        {
+            int i;
+            string s_out = null;
+
+            i = s_in.IndexOf("\r\n");
+            if (i != -1) // Found
+            {
+                s_out = s_in.Substring(0, i);
+                s_out += s_in.Substring(i + 1);
+            }
+
+            return s_out;
+        }
+
+        private void PopUpQueryCancelClick(object sender, RoutedEventArgs e)
+        {
+            PopUpQueryBox.Text = "";
+        }
+
+        private void ConfigMode_Click(object sender, RoutedEventArgs e)
+        {
+            if (!running && timeoutTicked == 1 && timesTicked == 1)
+            {
+                ConfigMode = (ConfigMode ? false : true);
+                textBlock_Time.Foreground = new SolidColorBrush((ConfigMode ? Colors.Gray : Colors.Yellow));
+                textBlock_AwayTimeoutTime.Foreground = new SolidColorBrush((ConfigMode ? Colors.Gray : Colors.Yellow));
+                textBlock_HomeTimeoutTime.Foreground = new SolidColorBrush((ConfigMode ? Colors.Gray : Colors.Yellow));
+                ConfigModeAppBarButton.Label = (ConfigMode ? "Normal mode" : "Config mode");
+            }
+            else
+            {
+                string s = "Reset to the initial state first.";
+                Task task = new MessageDialog(s).ShowAsync().AsTask();
+            }
+        }
+
+        private void About_Click(object sender, RoutedEventArgs e)
+        {
+            string s = "Street Basket Scoreboard\n\nVersion:"+ GetAppVersion() + "\n";
+            s += "\u00A9 2016 Hokpe Software. All rights reserved.\n";
+            s += "Application is made as study project for universal windows applications.\n";
+            s += "If you have change proposals or improvement ideas, don't hesitate to contact.\n\nhokpesoftware@outlook.com.\n";
+            Task task = new MessageDialog(s).ShowAsync().AsTask();
+        }
+
+        private string GetAppVersion()
+        {
+            /* Function copied from: http://stackoverflow.com/questions/28635208/retrieve-the-current-app-version-from-package */
+            Package package = Package.Current;
+            PackageId packageId = package.Id;
+            PackageVersion version = packageId.Version;
+
+            return string.Format("{0}.{1}.{2}.{3}", version.Major, version.Minor, version.Build, version.Revision);
+        }
+
+        private void StartStopRightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            if (PageEnabled)
+            {
+                if (!running && timeout == TIMEOUT_TYPE.none)
+                {
+                    ResetValues();
+                }
             }
         }
     }

@@ -1,1 +1,1 @@
-SaloStreetBasket icon is copied from http://salostreetbasket.sporttisaitti.com and scaled to different sizes to meet icon size requirements.
+Street Basket icon is drawn with Gimp2

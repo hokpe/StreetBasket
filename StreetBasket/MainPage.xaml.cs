@@ -26,6 +26,8 @@ using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.Notifications;
 using Windows.System.Display;
+using System.Threading;
+using System.ComponentModel;
 
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
@@ -87,7 +89,7 @@ namespace StreetBasket
             MainPage rootPage = e.Parameter as MainPage;
             ResetValues();
             ReadRulesFromFile();
-            //setLogo();
+            setLogo();
             g_DisplayRequest = new DisplayRequest();
         }
         private async void setLogo()
@@ -105,6 +107,7 @@ namespace StreetBasket
                     image.SetSource(stream);
                     Assets_StreetBasket_jpg.Source = image;
                     CustomLogoUsed = true;
+                    DefaultLogoButton.Visibility = Visibility.Visible;
                 }
             }
             catch (Exception ex) when (ex is System.IO.FileNotFoundException || ex is System.InvalidOperationException) { }
@@ -112,6 +115,7 @@ namespace StreetBasket
             if (!CustomLogoUsed)
             {
                 Assets_StreetBasket_jpg.Source = new BitmapImage(new Uri("ms-appx:///Assets/StreetBasket.jpg"));
+                DefaultLogoButton.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -516,17 +520,7 @@ namespace StreetBasket
                     var image = new BitmapImage();
                     image.SetSource(stream);
                     Assets_StreetBasket_jpg.Source = image;
-                }
-                else
-                {
-                    Assets_StreetBasket_jpg.Source = new BitmapImage(new Uri("ms-appx:///Assets/StreetBasket.jpg"));
-                    string s = "logo.jpg";
-                    StorageFolder folder = ApplicationData.Current.LocalFolder;
-                    StorageFile file2 = await folder.GetFileAsync(s);
-                    if (file2 != null)
-                    {
-                        await file2.DeleteAsync();
-                    }
+                    DefaultLogoButton.Visibility = Visibility.Visible;
                 }
             }
             else
@@ -657,6 +651,88 @@ namespace StreetBasket
                 {
                     ResetValues();
                 }
+            }
+        }
+
+        private async void DefaultIcon_Click(object sender, RoutedEventArgs e)
+        {
+            if (!running && timeoutTicked == 1 && timesTicked == 1)
+            {
+                Assets_StreetBasket_jpg.Source = new BitmapImage(new Uri("ms-appx:///Assets/StreetBasket.jpg"));
+                string s = "logo.jpg";
+                StorageFolder folder = ApplicationData.Current.LocalFolder;
+                StorageFile file2 = await folder.GetFileAsync(s);
+                if (file2 != null)
+                {
+                    await file2.DeleteAsync();
+                }
+                DefaultLogoButton.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                string s = "Reset to the initial state first.";
+                Task task = new MessageDialog(s).ShowAsync().AsTask();
+            }
+        }
+    }
+
+    /* 
+    This class ActualSizePropertyProxy is copied from 
+    http://stackoverflow.com/questions/13077585/how-to-databind-control-height-to-another-controls-height 
+    */
+    public sealed class ActualSizePropertyProxy : FrameworkElement, INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public FrameworkElement Element
+        {
+            get { return (FrameworkElement)GetValue(ElementProperty); }
+            set { SetValue(ElementProperty, value); }
+        }
+
+        public double ActualHeightValue
+        {
+            get { return Element == null ? 0 : Element.ActualHeight; }
+        }
+
+        public double ActualWidthValue
+        {
+            get { return Element == null ? 0 : Element.ActualWidth; }
+        }
+
+        public static readonly DependencyProperty ElementProperty =
+            DependencyProperty.Register("Element", typeof(FrameworkElement), typeof(ActualSizePropertyProxy),
+                                        new PropertyMetadata(null, OnElementPropertyChanged));
+
+        private static void OnElementPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            ((ActualSizePropertyProxy)d).OnElementChanged(e);
+        }
+
+        private void OnElementChanged(DependencyPropertyChangedEventArgs e)
+        {
+            FrameworkElement oldElement = (FrameworkElement)e.OldValue;
+            FrameworkElement newElement = (FrameworkElement)e.NewValue;
+
+            newElement.SizeChanged += new SizeChangedEventHandler(Element_SizeChanged);
+            if (oldElement != null)
+            {
+                oldElement.SizeChanged -= new SizeChangedEventHandler(Element_SizeChanged);
+            }
+            NotifyPropChange();
+        }
+
+        private void Element_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            NotifyPropChange();
+        }
+
+        private void NotifyPropChange()
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs("ActualWidthValue"));
+                PropertyChanged(this, new PropertyChangedEventArgs("ActualHeightValue"));
             }
         }
     }
